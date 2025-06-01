@@ -226,7 +226,7 @@ async function createTexturedPlanets() {
             
             // Store orbit in planet userData
             planet.userData.orbit = orbit;
-            planet.userData.orbitSpeed = (2 * Math.PI) / (orbitData.period * 0.05); // Much slower time scaling
+            planet.userData.orbitSpeed = (2 * Math.PI) / (orbitData.period * 0.2); // Even slower time scaling (was 0.05)
             
             // Create orbit visualization
             const orbitLine = createEllipticalOrbitLine(orbit, 0x666666, 0.4);

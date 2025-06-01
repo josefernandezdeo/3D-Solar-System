@@ -18,9 +18,9 @@ export const planetData = {
         color: 0x8C7853,
         emissive: 0x4A3629,
         emissiveIntensity: 0.05,
-        rotationSpeed: 0.0005, // Much slower
+        rotationSpeed: 0.0002, // Slower rotation
         orbitRadius: 15,
-        orbitSpeed: 0.002 // Realistic: Mercury orbits fastest (88 Earth days)
+        orbitSpeed: 0.0008 // Slower: Mercury orbits fastest (88 Earth days)
     },
     venus: {
         name: 'Venus',
@@ -28,9 +28,9 @@ export const planetData = {
         color: 0xFFC649,
         emissive: 0x664319,
         emissiveIntensity: 0.08,
-        rotationSpeed: -0.0002, // Retrograde rotation, much slower
+        rotationSpeed: -0.0001, // Retrograde rotation, slower
         orbitRadius: 20,
-        orbitSpeed: 0.0012 // Realistic: Venus (225 Earth days)
+        orbitSpeed: 0.0005 // Slower: Venus (225 Earth days)
     },
     earth: {
         name: 'Earth',
@@ -38,9 +38,9 @@ export const planetData = {
         color: 0x6B93D6,
         emissive: 0x1E2F45,
         emissiveIntensity: 0.06,
-        rotationSpeed: 0.002, // Much slower
+        rotationSpeed: 0.001, // Slower rotation
         orbitRadius: 25,
-        orbitSpeed: 0.0008 // Realistic: Earth baseline (365 days)
+        orbitSpeed: 0.0003 // Slower: Earth baseline (365 days)
     },
     mars: {
         name: 'Mars',
@@ -48,9 +48,9 @@ export const planetData = {
         color: 0xCD5C5C,
         emissive: 0x4A1F1F,
         emissiveIntensity: 0.07,
-        rotationSpeed: 0.0018, // Much slower
+        rotationSpeed: 0.0009, // Slower rotation
         orbitRadius: 35,
-        orbitSpeed: 0.0004 // Realistic: Mars (687 Earth days - about half Earth's speed)
+        orbitSpeed: 0.00015 // Slower: Mars (687 Earth days)
     },
     jupiter: {
         name: 'Jupiter',
@@ -58,9 +58,9 @@ export const planetData = {
         color: 0xD8A06A,
         emissive: 0x5C4229,
         emissiveIntensity: 0.04,
-        rotationSpeed: 0.005, // Fast rotation but slower than before
+        rotationSpeed: 0.002, // Fast rotation but slower than before
         orbitRadius: 65,
-        orbitSpeed: 0.000067 // Realistic: Jupiter (11.9 Earth years)
+        orbitSpeed: 0.000025 // Slower: Jupiter (11.9 Earth years)
     },
     saturn: {
         name: 'Saturn',
@@ -68,9 +68,9 @@ export const planetData = {
         color: 0xF5DEB3,
         emissive: 0x665A47,
         emissiveIntensity: 0.04,
-        rotationSpeed: 0.0045, // Fast rotation but slower
+        rotationSpeed: 0.0018, // Fast rotation but slower
         orbitRadius: 95,
-        orbitSpeed: 0.000027, // Realistic: Saturn (29.5 Earth years)
+        orbitSpeed: 0.00001, // Slower: Saturn (29.5 Earth years)
         hasRings: true
     },
     uranus: {
@@ -79,9 +79,9 @@ export const planetData = {
         color: 0x4FD0E7,
         emissive: 0x1F5459,
         emissiveIntensity: 0.05,
-        rotationSpeed: 0.0035, // Slower
+        rotationSpeed: 0.0015, // Slower
         orbitRadius: 135,
-        orbitSpeed: 0.0000095 // Realistic: Uranus (84 Earth years)
+        orbitSpeed: 0.000004 // Slower: Uranus (84 Earth years)
     },
     neptune: {
         name: 'Neptune',
@@ -89,9 +89,9 @@ export const planetData = {
         color: 0x4B70DD,
         emissive: 0x1E2C59,
         emissiveIntensity: 0.05,
-        rotationSpeed: 0.0038, // Slower
+        rotationSpeed: 0.0016, // Slower
         orbitRadius: 165,
-        orbitSpeed: 0.0000048 // Realistic: Neptune (165 Earth years)
+        orbitSpeed: 0.000002 // Slower: Neptune (165 Earth years)
     },
     pluto: {
         name: 'Pluto',
@@ -99,9 +99,9 @@ export const planetData = {
         color: 0xBDB7A8,
         emissive: 0x4A453E,
         emissiveIntensity: 0.08,
-        rotationSpeed: 0.0012, // Slower
+        rotationSpeed: 0.0005, // Slower
         orbitRadius: 200,
-        orbitSpeed: 0.0000032 // Realistic: Pluto (248 Earth years)
+        orbitSpeed: 0.000001 // Slower: Pluto (248 Earth years)
     },
     moon: {
         name: 'Moon',
@@ -109,9 +109,9 @@ export const planetData = {
         color: 0xC4C4C4,
         emissive: 0x2A2A2A,
         emissiveIntensity: 0.04,
-        rotationSpeed: 0.00037, // Tidally locked with orbit
+        rotationSpeed: 0.0001, // Slower, tidally locked
         orbitRadius: 3.8, // Distance from Earth (scaled)
-        orbitSpeed: 0.037, // Realistic: Moon orbits Earth every 27.3 days
+        orbitSpeed: 0.015, // Slower: Moon orbits Earth every 27.3 days
         parent: 'earth' // This moon orbits Earth
     }
 };

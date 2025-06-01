@@ -6,16 +6,30 @@ textureLoader.crossOrigin = 'anonymous'; // Enable CORS for GitHub Pages
 
 // Planet texture URLs - Using reliable CDN sources with guaranteed CORS support
 export const textureUrls = {
-    sun: 'https://cdn.jsdelivr.net/gh/mrdoob/three.js@dev/examples/textures/planets/sun.jpg',
+    sun: 'https://cdn.jsdelivr.net/gh/mrdoob/three.js@dev/examples/textures/lava/lavatile.jpg',
     mercury: 'https://cdn.jsdelivr.net/gh/mrdoob/three.js@dev/examples/textures/planets/mercury.jpg',
     venus: 'https://cdn.jsdelivr.net/gh/mrdoob/three.js@dev/examples/textures/planets/venus_surface.jpg',
     earth: 'https://cdn.jsdelivr.net/gh/mrdoob/three.js@dev/examples/textures/planets/earth_atmos_2048.jpg',
     mars: 'https://cdn.jsdelivr.net/gh/mrdoob/three.js@dev/examples/textures/planets/mars_1k_color.jpg',
     jupiter: 'https://cdn.jsdelivr.net/gh/mrdoob/three.js@dev/examples/textures/planets/jupiter_1024.jpg',
-    saturn: 'https://cdn.jsdelivr.net/gh/mrdoob/three.js@dev/examples/textures/planets/saturn_1024.jpg',
+    saturn: 'https://cdn.jsdelivr.net/gh/mrdoob/three.js@dev/examples/textures/land/grasslight-big.jpg',
     uranus: 'https://cdn.jsdelivr.net/gh/mrdoob/three.js@dev/examples/textures/planets/uranus_1024.jpg',
     neptune: 'https://cdn.jsdelivr.net/gh/mrdoob/three.js@dev/examples/textures/planets/neptune_1024.jpg',
     moon: 'https://cdn.jsdelivr.net/gh/mrdoob/three.js@dev/examples/textures/planets/moon_1024.jpg'
+};
+
+// Backup texture URLs in case primary ones fail
+export const backupTextureUrls = {
+    sun: 'https://threejs.org/examples/textures/lava/lavatile.jpg',
+    mercury: 'https://threejs.org/examples/textures/planets/mercury.jpg',
+    venus: 'https://threejs.org/examples/textures/planets/venus_surface.jpg',
+    earth: 'https://threejs.org/examples/textures/planets/earth_atmos_2048.jpg',
+    mars: 'https://threejs.org/examples/textures/planets/mars_1k_color.jpg',
+    jupiter: 'https://threejs.org/examples/textures/planets/jupiter_1024.jpg',
+    saturn: 'https://threejs.org/examples/textures/land/grasslight-big.jpg',
+    uranus: 'https://threejs.org/examples/textures/planets/uranus_1024.jpg',
+    neptune: 'https://threejs.org/examples/textures/planets/neptune_1024.jpg',
+    moon: 'https://threejs.org/examples/textures/planets/moon_1024.jpg'
 };
 
 // Alternative: Local texture paths (user's folder structure)
@@ -49,7 +63,7 @@ export const alternativeTexturePaths = {
 // Cache for loaded textures
 const textureCache = new Map();
 
-// Load texture with fallback
+// Load texture with fallback and backup URLs
 export function loadTexture(planetName, useLocal = false) {
     const cacheKey = `${planetName}_${useLocal ? 'local' : 'url'}`;
     
@@ -59,19 +73,20 @@ export function loadTexture(planetName, useLocal = false) {
     }
 
     return new Promise((resolve, reject) => {
-        const texturePath = useLocal ? localTexturePaths[planetName] : textureUrls[planetName];
+        const primaryPath = useLocal ? localTexturePaths[planetName] : textureUrls[planetName];
+        const backupPath = backupTextureUrls[planetName];
         
-        if (!texturePath) {
+        if (!primaryPath) {
             console.error(`❌ No texture path found for ${planetName}`);
             reject(new Error(`No texture path found for ${planetName}`));
             return;
         }
 
-        console.log(`🔍 Attempting to load ${planetName} texture from: ${texturePath}`);
+        console.log(`🔍 Attempting to load ${planetName} texture from: ${primaryPath}`);
 
         // Try loading the primary path first
         textureLoader.load(
-            texturePath,
+            primaryPath,
             // Success callback
             (texture) => {
                 // Configure texture properties
@@ -81,7 +96,7 @@ export function loadTexture(planetName, useLocal = false) {
                 
                 // Cache the texture
                 textureCache.set(cacheKey, texture);
-                console.log(`✅ Successfully loaded texture for ${planetName} from: ${texturePath}`);
+                console.log(`✅ Successfully loaded texture for ${planetName} from: ${primaryPath}`);
                 resolve(texture);
             },
             // Progress callback
@@ -91,12 +106,37 @@ export function loadTexture(planetName, useLocal = false) {
                     console.log(`📥 Loading ${planetName} texture: ${percent}% (${progress.loaded}/${progress.total} bytes)`);
                 }
             },
-            // Error callback - try alternative paths if local
+            // Error callback - try backup URL or alternative paths
             (error) => {
-                console.warn(`⚠️ Failed to load ${planetName} from primary path: ${texturePath}`);
+                console.warn(`⚠️ Failed to load ${planetName} from primary path: ${primaryPath}`);
                 console.warn(`Error details:`, error);
                 
-                if (useLocal && alternativeTexturePaths[planetName]) {
+                // Try backup URL first if not using local
+                if (!useLocal && backupPath) {
+                    console.log(`🔄 Trying backup URL for ${planetName}: ${backupPath}`);
+                    textureLoader.load(
+                        backupPath,
+                        (texture) => {
+                            texture.wrapS = THREE.RepeatWrapping;
+                            texture.wrapT = THREE.RepeatWrapping;
+                            texture.flipY = false;
+                            textureCache.set(cacheKey, texture);
+                            console.log(`✅ Loaded ${planetName} from backup URL: ${backupPath}`);
+                            resolve(texture);
+                        },
+                        undefined,
+                        (backupError) => {
+                            console.warn(`⚠️ Backup URL also failed for ${planetName}`);
+                            if (useLocal && alternativeTexturePaths[planetName]) {
+                                console.log(`🔄 Trying alternative local paths for ${planetName}...`);
+                                tryAlternativePaths(planetName, resolve, reject);
+                            } else {
+                                console.error(`❌ All texture sources failed for ${planetName}`);
+                                reject(backupError);
+                            }
+                        }
+                    );
+                } else if (useLocal && alternativeTexturePaths[planetName]) {
                     console.log(`🔄 Trying alternative paths for ${planetName}...`);
                     tryAlternativePaths(planetName, resolve, reject);
                 } else {
