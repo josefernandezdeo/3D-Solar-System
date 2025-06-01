@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🍅 Pomodoro Timer</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="phone-container">
+        <div class="app">
+            <!-- Points Badge -->
+            <div class="points-badge">
+                <span class="points-label">Points</span>
+                <span class="points-value" id="points">120</span>
+            </div>
+
+            <!-- Main Timer Section -->
+            <div class="timer-section">
+                <!-- Progress Circle with Tomato -->
+                <div class="progress-container">
+                    <svg class="progress-ring" width="280" height="280" viewBox="0 0 280 280">
+                        <!-- Background circles -->
+                        <circle class="progress-bg-outer" cx="140" cy="140" r="130"></circle>
+                        <circle class="progress-bg-inner" cx="140" cy="140" r="110"></circle>
+                        <!-- Progress circle -->
+                        <circle class="progress-circle" cx="140" cy="140" r="120" id="progress-circle"></circle>
+                        <!-- Progress dot -->
+                        <circle class="progress-dot" cx="140" cy="20" r="6" id="progress-dot"></circle>
+                    </svg>
+
+                    <!-- Tomato Character -->
+                    <div class="tomato-container">
+                        <div class="tomato-character">
+                            <!-- Tomato Body -->
+                            <div class="tomato-body">
+                                <!-- Tomato Leaves -->
+                                <div class="tomato-leaves">
+                                    <div class="leaf leaf-1"></div>
+                                    <div class="leaf leaf-2"></div>
+                                    <div class="leaf leaf-3"></div>
+                                    <div class="leaf leaf-4"></div>
+                                    <div class="leaf leaf-5"></div>
+                                </div>
+                                <!-- Tomato Face -->
+                                <div class="tomato-face">
+                                    <div class="eye eye-left"></div>
+                                    <div class="eye eye-right"></div>
+                                    <div class="mouth"></div>
+                                </div>
+                            </div>
+                            <!-- Tomato Shadow -->
+                            <div class="tomato-shadow"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Timer Display -->
+                <div class="timer-display">
+                    <span class="timer-text" id="timer-text">25:00</span>
+                </div>
+
+                <!-- Start Button -->
+                <button class="start-button" id="start-button">Start</button>
+
+                <!-- Settings Link -->
+                <button class="settings-link" id="settings-link">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.34 19.43,11L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.5,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.5,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.22,8.95 2.27,9.22 2.46,9.37L4.57,11C4.53,11.34 4.5,11.67 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.22,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.94C7.96,18.34 8.5,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.5,18.68 16.04,18.34 16.56,17.94L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z"/>
+                    </svg>
+                    Settings
+                </button>
+            </div>
+
+            <!-- Bottom Navigation -->
+            <div class="bottom-nav">
+                <button class="nav-item" data-nav="timeline">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4M12,6A6,6 0 0,0 6,12A6,6 0 0,0 12,18A6,6 0 0,0 18,12A6,6 0 0,0 12,6Z"/>
+                    </svg>
+                    <span>timeline</span>
+                </button>
+                
+                <button class="nav-item active" data-nav="timer">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22C6.47,22 2,17.5 2,12A10,10 0 0,1 12,2M12.5,7V12.25L17,14.92L16.25,16.15L11,13V7H12.5Z"/>
+                    </svg>
+                    <span>timer</span>
+                </button>
+                
+                <button class="nav-item" data-nav="garden">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12,2C13.1,2 14,2.9 14,4C14,5.1 13.1,6 12,6C10.9,6 10,5.1 10,4C10,2.9 10.9,2 12,2M21,9V7L15,13L13.5,7.5C13.1,6.8 12.4,6.3 11.7,6.3C10.8,6.3 10,7.1 10,8V8L8.5,12L7,9V7H5V9L6.5,12L5,15V17H7V15L8.5,12L10,15V17H12V15L10.5,12L12,8L13.5,13.5C13.9,14.2 14.6,14.7 15.3,14.7C16.2,14.7 17,13.9 17,13V13L19,9H21Z"/>
+                    </svg>
+                    <span>garden</span>
+                </button>
+                
+                <button class="nav-item" data-nav="blacklist">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12,2C17.53,2 22,6.47 22,12C22,17.53 17.53,22 12,22C6.47,22 2,17.53 2,12C2,6.47 6.47,2 12,2M15.59,7L12,10.59L8.41,7L7,8.41L10.59,12L7,15.59L8.41,17L12,13.41L15.59,17L17,15.59L13.41,12L17,8.41L15.59,7Z"/>
+                    </svg>
+                    <span>blacklist</span>
+                </button>
+                
+                <button class="nav-item" data-nav="usage">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M22,21H2V3H4V19H6V17H10V19H12V16H16V19H18V17H22V21Z"/>
+                    </svg>
+                    <span>usage</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal" id="settings-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Settings</h2>
+                <button class="modal-close" id="modal-close">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="setting-item">
+                    <label>Focus Time (minutes)</label>
+                    <input type="number" id="focus-time" value="25" min="1" max="60">
+                </div>
+                <div class="setting-item">
+                    <label>Short Break (minutes)</label>
+                    <input type="number" id="short-break" value="5" min="1" max="30">
+                </div>
+                <div class="setting-item">
+                    <label>Long Break (minutes)</label>
+                    <input type="number" id="long-break" value="15" min="1" max="60">
+                </div>
+                <div class="setting-item">
+                    <label>
+                        <input type="checkbox" id="sound-enabled" checked>
+                        Sound Notifications
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-save" id="save-settings">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Coming Soon Modal -->
+    <div class="modal" id="coming-soon-modal">
+        <div class="modal-content coming-soon-content">
+            <div class="coming-soon-header">
+                <button class="modal-close" id="coming-soon-close">×</button>
+            </div>
+            <div class="coming-soon-body">
+                <!-- Mini Tomato Character -->
+                <div class="mini-tomato-container">
+                    <div class="mini-tomato-character">
+                        <!-- Tomato Body -->
+                        <div class="mini-tomato-body">
+                            <!-- Tomato Leaves -->
+                            <div class="mini-tomato-leaves">
+                                <div class="mini-leaf mini-leaf-1"></div>
+                                <div class="mini-leaf mini-leaf-2"></div>
+                                <div class="mini-leaf mini-leaf-3"></div>
+                                <div class="mini-leaf mini-leaf-4"></div>
+                                <div class="mini-leaf mini-leaf-5"></div>
+                            </div>
+                            <!-- Tomato Face -->
+                            <div class="mini-tomato-face">
+                                <div class="mini-eye mini-eye-left"></div>
+                                <div class="mini-eye mini-eye-right"></div>
+                                <div class="mini-mouth"></div>
+                            </div>
+                        </div>
+                        <!-- Tomato Shadow -->
+                        <div class="mini-tomato-shadow"></div>
+                    </div>
+                </div>
+                
+                <h2 class="coming-soon-title">Coming Soon!</h2>
+                <p class="coming-soon-text" id="coming-soon-message">This feature is being prepared with love! 🍅</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html> 
