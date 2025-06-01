@@ -1,4 +1,4 @@
-import * as THREE from 'three';
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
 
 // Create asteroid belt between Mars and Jupiter
 export function createAsteroidBelt(innerRadius = 40, outerRadius = 60, count = 1500) {

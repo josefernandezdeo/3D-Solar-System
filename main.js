@@ -1,4 +1,4 @@
-import * as THREE from 'three';
+import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
 import { planetData, createPlanet, createSaturnRings, createSatellite } from './src/planets.js';
 import { EllipticalOrbit, createEllipticalOrbitLine, updateEllipticalOrbit, realOrbitData } from './src/orbits.js';
 import { createAsteroidBelt, createMajorAsteroids, updateAsteroidBelt, updateMajorAsteroids, createAsteroidBeltGuides } from './src/asteroids.js';
