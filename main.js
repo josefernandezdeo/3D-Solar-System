@@ -101,40 +101,49 @@ function updateCamera() {
 // Create planets with textures
 async function createTexturedPlanets() {
     // Update loading screen
-    updateLoadingScreen("Loading planet textures from local folder...");
+    updateLoadingScreen("Loading planet textures...");
     
     console.log('🔍 Starting texture loading process...');
-    console.log('📁 Expected texture folder: "./textures solar system/"');
+    console.log('🌍 Environment:', window.location.hostname);
     
     try {
-        // Load all textures from local folder
-        planetTextures = await loadAllTextures(true); // true = use local files
+        // Add timeout for texture loading to prevent hanging
+        const textureLoadingPromise = loadAllTextures(true); // true = try local first
+        const timeoutPromise = new Promise((_, reject) => 
+            setTimeout(() => reject(new Error('Texture loading timeout')), 15000) // 15 second timeout
+        );
+        
+        planetTextures = await Promise.race([textureLoadingPromise, timeoutPromise]);
         console.log('🎨 Texture loading complete! Results:', planetTextures);
         
         // Count successful textures
         const successCount = Object.values(planetTextures).filter(texture => texture !== null).length;
-        console.log(`✅ Successfully loaded ${successCount}/9 textures`);
+        console.log(`✅ Successfully loaded ${successCount}/${Object.keys(planetTextures).length} textures`);
         
-        // List which textures failed
-        Object.entries(planetTextures).forEach(([planetName, texture]) => {
-            if (!texture) {
-                console.warn(`❌ Missing texture for: ${planetName}`);
-            }
-        });
+        // If no textures loaded, this isn't critical - planets will use fallback colors
+        if (successCount === 0) {
+            console.warn('⚠️ No textures loaded, using fallback colors');
+            updateLoadingScreen("Textures failed to load, using fallback colors...");
+        }
         
     } catch (error) {
-        console.error('🚨 Critical error during texture loading:', error);
-        console.warn('⚠️ Some textures failed to load from local folder, using fallback colors');
+        console.error('🚨 Texture loading failed or timed out:', error);
+        console.warn('⚠️ Continuing without textures, using fallback colors');
+        updateLoadingScreen("Using fallback colors...");
+        planetTextures = {}; // Empty object so planets use fallback colors
     }
 
-    // Create all planets with textures
+    // Always continue creating planets even if textures failed
+    updateLoadingScreen("Creating solar system...");
+
+    // Create all planets with textures (or fallback colors)
     Object.entries(planetData).forEach(([planetName, planetInfo]) => {
         // Skip moon for now - we'll handle it separately
         if (planetName === 'moon') return;
         
-        const texture = planetTextures[planetName];
+        const texture = planetTextures[planetName] || null;
         
-        // Configure texture based on planet type
+        // Configure texture based on planet type (if available)
         if (texture) {
             let planetType;
             if (planetName === 'sun') planetType = 'sun';
@@ -144,7 +153,7 @@ async function createTexturedPlanets() {
             configureTexture(texture, planetType);
         }
 
-        // Create planet with textured material
+        // Create planet with textured material (or fallback colors)
         const planet = createPlanetWithTexture(planetInfo, texture);
         planets.push(planet);
         scene.add(planet);
@@ -152,9 +161,9 @@ async function createTexturedPlanets() {
         // Create the Moon for Earth
         if (planetName === 'earth') {
             const moonData = planetData.moon;
-            const moonTexture = planetTextures.moon;
+            const moonTexture = planetTextures.moon || null;
             
-            // Configure moon texture
+            // Configure moon texture (if available)
             if (moonTexture) {
                 configureTexture(moonTexture, 'terrestrial');
             }
@@ -198,6 +207,7 @@ async function createTexturedPlanets() {
     });
 
     // Create asteroid belt
+    updateLoadingScreen("Creating asteroid belt...");
     asteroidBelt = createAsteroidBelt(40, 60, 1500);
     scene.add(asteroidBelt);
 
@@ -210,6 +220,7 @@ async function createTexturedPlanets() {
     console.log('🪐 Solar system created with textures!');
     
     // Initialize interactive components
+    updateLoadingScreen("Initializing interactive features...");
     initializeInteractiveFeatures();
 }
 

@@ -19,30 +19,30 @@ export const textureUrls = {
 
 // Alternative: Local texture paths (user's folder structure)
 export const localTexturePaths = {
-    sun: './textures solar system/2k_sun.jpg',
-    mercury: './textures solar system/2k_mercury.jpg',
-    venus: './textures solar system/2k_venus_surface.jpg',
-    earth: './textures solar system/2k_earth_daymap.jpg',
-    mars: './textures solar system/2k_mars.jpg',
-    jupiter: './textures solar system/2k_jupiter.jpg',
-    saturn: './textures solar system/2k_saturn.jpg',
-    uranus: './textures solar system/2k_uranus.jpg',
-    neptune: './textures solar system/2k_neptune.jpg',
-    moon: './textures solar system/2k_moon.jpg'
+    sun: './textures%20solar%20system/2k_sun.jpg',
+    mercury: './textures%20solar%20system/2k_mercury.jpg',
+    venus: './textures%20solar%20system/2k_venus_surface.jpg',
+    earth: './textures%20solar%20system/2k_earth_daymap.jpg',
+    mars: './textures%20solar%20system/2k_mars.jpg',
+    jupiter: './textures%20solar%20system/2k_jupiter.jpg',
+    saturn: './textures%20solar%20system/2k_saturn.jpg',
+    uranus: './textures%20solar%20system/2k_uranus.jpg',
+    neptune: './textures%20solar%20system/2k_neptune.jpg',
+    moon: './textures%20solar%20system/2k_moon.jpg'
 };
 
 // Alternative file names (in case user has different naming)
 export const alternativeTexturePaths = {
-    sun: ['./textures solar system/2k_sun.jpg'],
-    mercury: ['./textures solar system/2k_mercury.jpg'],
-    venus: ['./textures solar system/2k_venus_surface.jpg', './textures solar system/2k_venus_atmosphere.jpg'],
-    earth: ['./textures solar system/2k_earth_daymap.jpg'],
-    mars: ['./textures solar system/2k_mars.jpg'],
-    jupiter: ['./textures solar system/2k_jupiter.jpg'],
-    saturn: ['./textures solar system/2k_saturn.jpg'],
-    uranus: ['./textures solar system/2k_uranus.jpg'],
-    neptune: ['./textures solar system/2k_neptune.jpg'],
-    moon: ['./textures solar system/2k_moon.jpg']
+    sun: ['./textures%20solar%20system/2k_sun.jpg', './textures solar system/2k_sun.jpg'],
+    mercury: ['./textures%20solar%20system/2k_mercury.jpg', './textures solar system/2k_mercury.jpg'],
+    venus: ['./textures%20solar%20system/2k_venus_surface.jpg', './textures%20solar%20system/2k_venus_atmosphere.jpg', './textures solar system/2k_venus_surface.jpg'],
+    earth: ['./textures%20solar%20system/2k_earth_daymap.jpg', './textures solar system/2k_earth_daymap.jpg'],
+    mars: ['./textures%20solar%20system/2k_mars.jpg', './textures solar system/2k_mars.jpg'],
+    jupiter: ['./textures%20solar%20system/2k_jupiter.jpg', './textures solar system/2k_jupiter.jpg'],
+    saturn: ['./textures%20solar%20system/2k_saturn.jpg', './textures solar system/2k_saturn.jpg'],
+    uranus: ['./textures%20solar%20system/2k_uranus.jpg', './textures solar system/2k_uranus.jpg'],
+    neptune: ['./textures%20solar%20system/2k_neptune.jpg', './textures solar system/2k_neptune.jpg'],
+    moon: ['./textures%20solar%20system/2k_moon.jpg', './textures solar system/2k_moon.jpg']
 };
 
 // Cache for loaded textures
@@ -147,24 +147,61 @@ function tryAlternativePaths(planetName, resolve, reject) {
     tryNext();
 }
 
-// Load all planet textures
+// Load all planet textures with GitHub Pages compatibility
 export async function loadAllTextures(useLocal = false) {
-    const loadingPromises = Object.keys(textureUrls).map(planetName => 
-        loadTexture(planetName, useLocal).catch(error => {
-            console.warn(`Failed to load ${planetName} texture:`, error);
-            return null; // Return null for failed textures
-        })
-    );
-
-    const results = await Promise.all(loadingPromises);
+    console.log('🎨 Starting texture loading...', useLocal ? 'LOCAL mode' : 'REMOTE mode');
     
-    // Create texture map
-    const textures = {};
-    Object.keys(textureUrls).forEach((planetName, index) => {
-        textures[planetName] = results[index];
-    });
+    // For GitHub Pages, detect if we're running on localhost vs deployed
+    const isLocalhost = window.location.hostname === 'localhost' || 
+                       window.location.hostname === '127.0.0.1' || 
+                       window.location.hostname === '';
+    
+    const shouldTryLocal = useLocal && isLocalhost;
+    
+    console.log('🌍 Environment:', isLocalhost ? 'LOCALHOST' : 'GITHUB PAGES');
+    console.log('📂 Will try local textures:', shouldTryLocal);
 
-    console.log('🎨 Texture loading complete!');
+    const planetNames = Object.keys(textureUrls);
+    const textures = {};
+
+    // Load textures with automatic fallback
+    for (const planetName of planetNames) {
+        try {
+            let texture = null;
+            
+            // Try local first if we're on localhost
+            if (shouldTryLocal) {
+                console.log(`🔍 Trying local texture for ${planetName}...`);
+                try {
+                    texture = await loadTexture(planetName, true);
+                    console.log(`✅ Loaded ${planetName} from LOCAL`);
+                } catch (error) {
+                    console.warn(`⚠️ Local texture failed for ${planetName}, trying remote...`);
+                }
+            }
+            
+            // If local failed or we're on GitHub Pages, try remote
+            if (!texture) {
+                console.log(`🌐 Trying remote texture for ${planetName}...`);
+                try {
+                    texture = await loadTexture(planetName, false);
+                    console.log(`✅ Loaded ${planetName} from REMOTE`);
+                } catch (error) {
+                    console.error(`❌ Both local and remote failed for ${planetName}:`, error);
+                }
+            }
+            
+            textures[planetName] = texture;
+            
+        } catch (error) {
+            console.error(`💥 Critical error loading ${planetName}:`, error);
+            textures[planetName] = null;
+        }
+    }
+
+    const successCount = Object.values(textures).filter(t => t !== null).length;
+    console.log(`🎯 Texture loading complete: ${successCount}/${planetNames.length} successful`);
+    
     return textures;
 }
 
