@@ -13,7 +13,8 @@ export const textureUrls = {
     jupiter: 'https://www.solarsystemscope.com/textures/download/2k_jupiter.jpg',
     saturn: 'https://www.solarsystemscope.com/textures/download/2k_saturn.jpg',
     uranus: 'https://www.solarsystemscope.com/textures/download/2k_uranus.jpg',
-    neptune: 'https://www.solarsystemscope.com/textures/download/2k_neptune.jpg'
+    neptune: 'https://www.solarsystemscope.com/textures/download/2k_neptune.jpg',
+    moon: 'https://www.solarsystemscope.com/textures/download/2k_moon.jpg'
 };
 
 // Alternative: Local texture paths (user's folder structure)
@@ -26,7 +27,8 @@ export const localTexturePaths = {
     jupiter: './textures solar system/2k_jupiter.jpg',
     saturn: './textures solar system/2k_saturn.jpg',
     uranus: './textures solar system/2k_uranus.jpg',
-    neptune: './textures solar system/2k_neptune.jpg'
+    neptune: './textures solar system/2k_neptune.jpg',
+    moon: './textures solar system/2k_moon.jpg'
 };
 
 // Alternative file names (in case user has different naming)
@@ -39,7 +41,8 @@ export const alternativeTexturePaths = {
     jupiter: ['./textures solar system/2k_jupiter.jpg'],
     saturn: ['./textures solar system/2k_saturn.jpg'],
     uranus: ['./textures solar system/2k_uranus.jpg'],
-    neptune: ['./textures solar system/2k_neptune.jpg']
+    neptune: ['./textures solar system/2k_neptune.jpg'],
+    moon: ['./textures solar system/2k_moon.jpg']
 };
 
 // Cache for loaded textures

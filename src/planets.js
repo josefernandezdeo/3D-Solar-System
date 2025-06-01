@@ -20,7 +20,7 @@ export const planetData = {
         emissiveIntensity: 0.05,
         rotationSpeed: 0.0005, // Much slower
         orbitRadius: 15,
-        orbitSpeed: 0.008 // Much slower orbital speed
+        orbitSpeed: 0.002 // Realistic: Mercury orbits fastest (88 Earth days)
     },
     venus: {
         name: 'Venus',
@@ -30,7 +30,7 @@ export const planetData = {
         emissiveIntensity: 0.08,
         rotationSpeed: -0.0002, // Retrograde rotation, much slower
         orbitRadius: 20,
-        orbitSpeed: 0.006 // Much slower orbital speed
+        orbitSpeed: 0.0012 // Realistic: Venus (225 Earth days)
     },
     earth: {
         name: 'Earth',
@@ -40,7 +40,7 @@ export const planetData = {
         emissiveIntensity: 0.06,
         rotationSpeed: 0.002, // Much slower
         orbitRadius: 25,
-        orbitSpeed: 0.004 // Much slower orbital speed
+        orbitSpeed: 0.0008 // Realistic: Earth baseline (365 days)
     },
     mars: {
         name: 'Mars',
@@ -50,7 +50,7 @@ export const planetData = {
         emissiveIntensity: 0.07,
         rotationSpeed: 0.0018, // Much slower
         orbitRadius: 35,
-        orbitSpeed: 0.003 // Much slower orbital speed
+        orbitSpeed: 0.0004 // Realistic: Mars (687 Earth days - about half Earth's speed)
     },
     jupiter: {
         name: 'Jupiter',
@@ -60,7 +60,7 @@ export const planetData = {
         emissiveIntensity: 0.04,
         rotationSpeed: 0.005, // Fast rotation but slower than before
         orbitRadius: 65,
-        orbitSpeed: 0.0006 // Much slower orbital speed
+        orbitSpeed: 0.000067 // Realistic: Jupiter (11.9 Earth years)
     },
     saturn: {
         name: 'Saturn',
@@ -70,7 +70,7 @@ export const planetData = {
         emissiveIntensity: 0.04,
         rotationSpeed: 0.0045, // Fast rotation but slower
         orbitRadius: 95,
-        orbitSpeed: 0.0004, // Much slower orbital speed
+        orbitSpeed: 0.000027, // Realistic: Saturn (29.5 Earth years)
         hasRings: true
     },
     uranus: {
@@ -81,7 +81,7 @@ export const planetData = {
         emissiveIntensity: 0.05,
         rotationSpeed: 0.0035, // Slower
         orbitRadius: 135,
-        orbitSpeed: 0.0002 // Much slower orbital speed
+        orbitSpeed: 0.0000095 // Realistic: Uranus (84 Earth years)
     },
     neptune: {
         name: 'Neptune',
@@ -91,7 +91,7 @@ export const planetData = {
         emissiveIntensity: 0.05,
         rotationSpeed: 0.0038, // Slower
         orbitRadius: 165,
-        orbitSpeed: 0.00016 // Much slower orbital speed
+        orbitSpeed: 0.0000048 // Realistic: Neptune (165 Earth years)
     },
     pluto: {
         name: 'Pluto',
@@ -101,7 +101,18 @@ export const planetData = {
         emissiveIntensity: 0.08,
         rotationSpeed: 0.0012, // Slower
         orbitRadius: 200,
-        orbitSpeed: 0.00006 // Much slower orbital speed
+        orbitSpeed: 0.0000032 // Realistic: Pluto (248 Earth years)
+    },
+    moon: {
+        name: 'Moon',
+        radius: 0.27, // About 1/4 Earth's size
+        color: 0xC4C4C4,
+        emissive: 0x2A2A2A,
+        emissiveIntensity: 0.04,
+        rotationSpeed: 0.00037, // Tidally locked with orbit
+        orbitRadius: 3.8, // Distance from Earth (scaled)
+        orbitSpeed: 0.037, // Realistic: Moon orbits Earth every 27.3 days
+        parent: 'earth' // This moon orbits Earth
     }
 };
 
@@ -198,8 +209,7 @@ export function createSaturnRings(planet) {
         
         // Enhanced ice and rock colors
         const brightness = 0.8 + Math.random() * 0.2;
-        const warmth = Math.random() * 0.1;
-        colors.push(brightness, brightness - warmth, brightness - warmth * 2);
+        colors.push(brightness, brightness, brightness * 0.9);
     }
     
     particleGeometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
@@ -220,45 +230,104 @@ export function createSaturnRings(planet) {
     return rings;
 }
 
-// Create orbit line for visualization
+// Create orbit line visualization
 export function createOrbitLine(radius) {
-    const points = [];
-    const segments = 64;
-    
-    for (let i = 0; i <= segments; i++) {
-        const angle = (i / segments) * Math.PI * 2;
-        points.push(new THREE.Vector3(
-            Math.cos(angle) * radius,
-            0,
-            Math.sin(angle) * radius
-        ));
-    }
-    
-    const geometry = new THREE.BufferGeometry().setFromPoints(points);
-    const material = new THREE.LineBasicMaterial({ 
-        color: 0x444444, 
-        transparent: true, 
-        opacity: 0.3 
+    const geometry = new THREE.RingGeometry(radius - 0.1, radius + 0.1, 128);
+    const material = new THREE.MeshBasicMaterial({
+        color: 0x444444,
+        transparent: true,
+        opacity: 0.3,
+        side: THREE.DoubleSide
     });
     
-    return new THREE.Line(geometry, material);
+    const orbitLine = new THREE.Mesh(geometry, material);
+    orbitLine.rotation.x = Math.PI / 2;
+    
+    return orbitLine;
 }
 
-// Update planet positions and rotations (legacy for circular orbits)
+// Create a satellite (like the Moon) that orbits a parent planet
+export function createSatellite(satelliteInfo, parentPlanet) {
+    const geometry = new THREE.SphereGeometry(satelliteInfo.radius, 32, 16);
+    
+    // Create material with lunar surface characteristics
+    const material = new THREE.MeshPhongMaterial({
+        color: satelliteInfo.color,
+        emissive: satelliteInfo.emissive,
+        emissiveIntensity: satelliteInfo.emissiveIntensity,
+        shininess: 5, // Low shininess for rocky surface
+        specular: 0x111111
+    });
+    
+    const satellite = new THREE.Mesh(geometry, material);
+    
+    // Add custom properties for satellite animation
+    satellite.userData = {
+        name: satelliteInfo.name,
+        rotationSpeed: satelliteInfo.rotationSpeed,
+        orbitRadius: satelliteInfo.orbitRadius,
+        orbitSpeed: satelliteInfo.orbitSpeed,
+        orbitAngle: Math.random() * Math.PI * 2,
+        parent: satelliteInfo.parent,
+        isSatellite: true
+    };
+    
+    // Position the satellite initially
+    const x = Math.cos(satellite.userData.orbitAngle) * satellite.userData.orbitRadius;
+    const z = Math.sin(satellite.userData.orbitAngle) * satellite.userData.orbitRadius;
+    satellite.position.set(x, 0, z);
+    
+    // Add the satellite to the parent planet
+    parentPlanet.add(satellite);
+    
+    // Create a small orbit line for the satellite
+    const orbitGeometry = new THREE.RingGeometry(satelliteInfo.orbitRadius - 0.05, satelliteInfo.orbitRadius + 0.05, 64);
+    const orbitMaterial = new THREE.MeshBasicMaterial({
+        color: 0x666666,
+        transparent: true,
+        opacity: 0.2,
+        side: THREE.DoubleSide
+    });
+    
+    const orbitLine = new THREE.Mesh(orbitGeometry, orbitMaterial);
+    orbitLine.rotation.x = Math.PI / 2;
+    parentPlanet.add(orbitLine);
+    
+    return satellite;
+}
+
+// Update planet positions and rotations
 export function updatePlanets(planets, deltaTime) {
     planets.forEach(planet => {
-        const data = planet.userData;
+        if (planet.userData.name === 'Sun') return;
         
-        // Rotate planet on its axis
-        planet.rotation.y += data.rotationSpeed;
+        // Update orbital position
+        planet.userData.orbitAngle += planet.userData.orbitSpeed * deltaTime;
         
-        // Update orbital position (skip sun)
-        if (data.orbitRadius > 0) {
-            data.orbitAngle += data.orbitSpeed * deltaTime;
-            
-            planet.position.x = Math.cos(data.orbitAngle) * data.orbitRadius;
-            planet.position.z = Math.sin(data.orbitAngle) * data.orbitRadius;
-        }
+        // Calculate new position
+        const x = Math.cos(planet.userData.orbitAngle) * planet.userData.orbitRadius;
+        const z = Math.sin(planet.userData.orbitAngle) * planet.userData.orbitRadius;
+        
+        planet.position.set(x, 0, z);
+        
+        // Update planet rotation
+        planet.rotation.y += planet.userData.rotationSpeed * deltaTime;
+        
+        // Update satellites (like the Moon)
+        planet.children.forEach(child => {
+            if (child.userData && child.userData.isSatellite) {
+                // Update satellite's orbital position around its parent
+                child.userData.orbitAngle += child.userData.orbitSpeed * deltaTime;
+                
+                const satX = Math.cos(child.userData.orbitAngle) * child.userData.orbitRadius;
+                const satZ = Math.sin(child.userData.orbitAngle) * child.userData.orbitRadius;
+                
+                child.position.set(satX, 0, satZ);
+                
+                // Update satellite rotation (tidally locked for Moon)
+                child.rotation.y += child.userData.rotationSpeed * deltaTime;
+            }
+        });
     });
 }
 

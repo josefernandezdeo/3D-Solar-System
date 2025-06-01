@@ -1,8 +1,12 @@
 import * as THREE from 'three';
-import { planetData, createPlanet, createSaturnRings } from './src/planets.js';
+import { planetData, createPlanet, createSaturnRings, createSatellite } from './src/planets.js';
 import { EllipticalOrbit, createEllipticalOrbitLine, updateEllipticalOrbit, realOrbitData } from './src/orbits.js';
 import { createAsteroidBelt, createMajorAsteroids, updateAsteroidBelt, updateMajorAsteroids, createAsteroidBeltGuides } from './src/asteroids.js';
 import { loadAllTextures, createTexturedMaterial, configureTexture } from './src/textures.js';
+import { UIManager } from './src/ui.js';
+import { PlanetPicker } from './src/utils.js';
+import { CameraManager } from './src/camera.js';
+import { getPlanetData } from './src/data.js';
 
 // Scene setup
 const scene = new THREE.Scene();
@@ -72,90 +76,21 @@ let majorAsteroids = [];
 let asteroidGuides = [];
 let planetTextures = {};
 
+// Interactive components
+let uiManager;
+let planetPicker;
+let cameraManager;
+
 // Camera positioning and controls
 camera.position.set(80, 50, 80);
 camera.lookAt(0, 0, 0);
 
-// Enhanced mouse controls
-let mouseX = 0;
-let mouseY = 0;
-let mouseDownX = 0;
-let mouseDownY = 0;
-let isMouseDown = false;
-
+// Camera control variables (managed by CameraManager)
 let cameraRadius = 120;
 let cameraTheta = Math.PI / 4;
 let cameraPhi = Math.PI / 6;
 
-// Mouse event listeners
-document.addEventListener('mousedown', (event) => {
-    isMouseDown = true;
-    mouseDownX = event.clientX;
-    mouseDownY = event.clientY;
-});
-
-document.addEventListener('mouseup', () => {
-    isMouseDown = false;
-});
-
-document.addEventListener('mousemove', (event) => {
-    if (isMouseDown) {
-        const deltaX = event.clientX - mouseDownX;
-        const deltaY = event.clientY - mouseDownY;
-        
-        cameraTheta -= deltaX * 0.01;
-        cameraPhi -= deltaY * 0.01;
-        
-        cameraPhi = Math.max(0.1, Math.min(Math.PI - 0.1, cameraPhi));
-        
-        mouseDownX = event.clientX;
-        mouseDownY = event.clientY;
-    }
-});
-
-// Zoom with mouse wheel
-document.addEventListener('wheel', (event) => {
-    cameraRadius += event.deltaY * 0.2;
-    cameraRadius = Math.max(30, Math.min(400, cameraRadius));
-});
-
-// Touch controls for mobile
-let touches = [];
-
-document.addEventListener('touchstart', (event) => {
-    touches = Array.from(event.touches);
-});
-
-document.addEventListener('touchmove', (event) => {
-    event.preventDefault();
-    const currentTouches = Array.from(event.touches);
-    
-    if (touches.length === 1 && currentTouches.length === 1) {
-        const deltaX = currentTouches[0].clientX - touches[0].clientX;
-        const deltaY = currentTouches[0].clientY - touches[0].clientY;
-        
-        cameraTheta -= deltaX * 0.01;
-        cameraPhi -= deltaY * 0.01;
-        cameraPhi = Math.max(0.1, Math.min(Math.PI - 0.1, cameraPhi));
-    } else if (touches.length === 2 && currentTouches.length === 2) {
-        const oldDistance = Math.hypot(
-            touches[1].clientX - touches[0].clientX,
-            touches[1].clientY - touches[0].clientY
-        );
-        const newDistance = Math.hypot(
-            currentTouches[1].clientX - currentTouches[0].clientX,
-            currentTouches[1].clientY - currentTouches[0].clientY
-        );
-        
-        const zoomFactor = (oldDistance - newDistance) * 0.8;
-        cameraRadius += zoomFactor;
-        cameraRadius = Math.max(30, Math.min(400, cameraRadius));
-    }
-    
-    touches = currentTouches;
-});
-
-// Update camera position
+// Update camera position (fallback function for when CameraManager isn't active)
 function updateCamera() {
     camera.position.x = cameraRadius * Math.sin(cameraPhi) * Math.cos(cameraTheta);
     camera.position.y = cameraRadius * Math.cos(cameraPhi);
@@ -194,6 +129,9 @@ async function createTexturedPlanets() {
 
     // Create all planets with textures
     Object.entries(planetData).forEach(([planetName, planetInfo]) => {
+        // Skip moon for now - we'll handle it separately
+        if (planetName === 'moon') return;
+        
         const texture = planetTextures[planetName];
         
         // Configure texture based on planet type
@@ -210,6 +148,21 @@ async function createTexturedPlanets() {
         const planet = createPlanetWithTexture(planetInfo, texture);
         planets.push(planet);
         scene.add(planet);
+        
+        // Create the Moon for Earth
+        if (planetName === 'earth') {
+            const moonData = planetData.moon;
+            const moonTexture = planetTextures.moon;
+            
+            // Configure moon texture
+            if (moonTexture) {
+                configureTexture(moonTexture, 'terrestrial');
+            }
+            
+            // Create moon as Earth's satellite
+            const moon = createSatelliteWithTexture(moonData, moonTexture, planet);
+            console.log('🌙 Moon created and added to Earth!');
+        }
         
         // Create elliptical orbit (except for sun)
         if (planetInfo.orbitRadius > 0 && realOrbitData[planetName]) {
@@ -255,6 +208,9 @@ async function createTexturedPlanets() {
     asteroidGuides.forEach(guide => scene.add(guide));
 
     console.log('🪐 Solar system created with textures!');
+    
+    // Initialize interactive components
+    initializeInteractiveFeatures();
 }
 
 // Create planet with texture (enhanced version of createPlanet)
@@ -297,6 +253,57 @@ function createPlanetWithTexture(planetInfo, texture) {
     return planet;
 }
 
+// Create satellite with texture (like the Moon)
+function createSatelliteWithTexture(satelliteInfo, texture, parentPlanet) {
+    const geometry = new THREE.SphereGeometry(satelliteInfo.radius, 32, 16);
+    
+    // Use the textured material function
+    const material = createTexturedMaterial(satelliteInfo, texture);
+    
+    // Adjust material for lunar surface characteristics
+    material.shininess = 5; // Low shininess for rocky surface
+    
+    const satellite = new THREE.Mesh(geometry, material);
+    
+    // Add custom properties for satellite animation
+    satellite.userData = {
+        name: satelliteInfo.name,
+        rotationSpeed: satelliteInfo.rotationSpeed,
+        orbitRadius: satelliteInfo.orbitRadius,
+        orbitSpeed: satelliteInfo.orbitSpeed,
+        orbitAngle: Math.random() * Math.PI * 2,
+        parent: satelliteInfo.parent,
+        isSatellite: true
+    };
+    
+    // Position the satellite initially
+    const x = Math.cos(satellite.userData.orbitAngle) * satellite.userData.orbitRadius;
+    const z = Math.sin(satellite.userData.orbitAngle) * satellite.userData.orbitRadius;
+    satellite.position.set(x, 0, z);
+    
+    // Add the satellite to the parent planet
+    parentPlanet.add(satellite);
+    
+    // Create a small orbit line for the satellite
+    const orbitGeometry = new THREE.RingGeometry(satelliteInfo.orbitRadius - 0.05, satelliteInfo.orbitRadius + 0.05, 64);
+    const orbitMaterial = new THREE.MeshBasicMaterial({
+        color: 0x666666,
+        transparent: true,
+        opacity: 0.2,
+        side: THREE.DoubleSide
+    });
+    
+    const orbitLine = new THREE.Mesh(orbitGeometry, orbitMaterial);
+    orbitLine.rotation.x = Math.PI / 2;
+    parentPlanet.add(orbitLine);
+    
+    // Enable shadows for the satellite
+    satellite.castShadow = true;
+    satellite.receiveShadow = true;
+    
+    return satellite;
+}
+
 // Update loading screen with progress
 function updateLoadingScreen(message) {
     const loadingScreen = document.querySelector('#loading-screen p');
@@ -313,15 +320,40 @@ function animate() {
     
     const deltaTime = clock.getDelta();
     
-    // Update planets with elliptical orbits
+    // Update planets with realistic orbital speeds
     planets.forEach(planet => {
         const data = planet.userData;
         
-        // Rotate planet on its axis (now much slower)
-        planet.rotation.y += data.rotationSpeed;
+        // Rotate planet on its axis (much slower)
+        planet.rotation.y += data.rotationSpeed * deltaTime;
         
-        // Update elliptical orbital position
-        updateEllipticalOrbit(planet, deltaTime);
+        // Use realistic orbital movement instead of elliptical
+        if (data.name !== 'Sun') {
+            // Update orbital position using realistic speeds
+            data.orbitAngle += data.orbitSpeed * deltaTime;
+            
+            // Calculate new position
+            const x = Math.cos(data.orbitAngle) * data.orbitRadius;
+            const z = Math.sin(data.orbitAngle) * data.orbitRadius;
+            
+            planet.position.set(x, 0, z);
+        }
+        
+        // Update satellites (like the Moon)
+        planet.children.forEach(child => {
+            if (child.userData && child.userData.isSatellite) {
+                // Update satellite's orbital position around its parent
+                child.userData.orbitAngle += child.userData.orbitSpeed * deltaTime;
+                
+                const satX = Math.cos(child.userData.orbitAngle) * child.userData.orbitRadius;
+                const satZ = Math.sin(child.userData.orbitAngle) * child.userData.orbitRadius;
+                
+                child.position.set(satX, 0, satZ);
+                
+                // Update satellite rotation (tidally locked for Moon)
+                child.rotation.y += child.userData.rotationSpeed * deltaTime;
+            }
+        });
     });
     
     // Update asteroid belt
@@ -331,7 +363,11 @@ function animate() {
     }
     
     // Update camera position
-    updateCamera();
+    if (cameraManager) {
+        cameraManager.update(deltaTime);
+    } else {
+        updateCamera();
+    }
     
     // Render the scene
     renderer.render(scene, camera);
@@ -358,15 +394,11 @@ function startSolarSystem() {
 
 // Update info panel for textured version
 function updateInfoPanel() {
+    // Info panel removed per user request
     const infoPanel = document.getElementById('info-panel');
-    infoPanel.innerHTML = `
-        <h2>3D Solar System - Textured</h2>
-        <p>🪐 Complete Solar System (9 planets)</p>
-        <p>🎨 Realistic Planet Textures</p>
-        <p>🌌 Slower Orbits for Easy Viewing</p>
-        <p>💫 Saturn's Rings & Atmospheric Glow</p>
-        <p>🖱️ Mouse: Rotate | 🔄 Scroll: Zoom</p>
-    `;
+    if (infoPanel) {
+        infoPanel.style.display = 'none';
+    }
 }
 
 // Initialize the solar system with textures
@@ -397,4 +429,74 @@ async function initSolarSystem() {
 }
 
 // Start the initialization
-initSolarSystem(); 
+initSolarSystem();
+
+// Initialize interactive UI and planet picking
+function initializeInteractiveFeatures() {
+    console.log('🔧 Starting interactive features initialization...');
+    
+    try {
+        // Initialize UI Manager
+        console.log('📋 Creating UI Manager...');
+        uiManager = new UIManager();
+        console.log('✅ UI Manager created');
+        
+        // Initialize Camera Manager
+        console.log('📷 Creating Camera Manager...');
+        cameraManager = new CameraManager(camera, scene);
+        cameraManager.setPlanets(planets);
+        console.log('✅ Camera Manager created');
+        
+        // Initialize Planet Picker
+        console.log('🎯 Creating Planet Picker...');
+        planetPicker = new PlanetPicker(camera, scene);
+        planetPicker.planets = planets;
+        console.log('✅ Planet Picker created');
+        
+        // Set up planet click handler
+        planetPicker.setClickHandler((planetName) => {
+            console.log('🪐 Planet clicked:', planetName);
+            const planetData = getPlanetData(planetName.toLowerCase());
+            if (planetData) {
+                uiManager.showPlanetInfo(planetData);
+                uiManager.selectPlanetByName(planetName.toLowerCase());
+            } else {
+                console.warn('❌ Planet data not found for:', planetName);
+            }
+        });
+        
+        // Set up UI event handlers using the correct custom event system
+        document.addEventListener('solarSystem:planetSelected', (event) => {
+            console.log('🎯 Planet selected event:', event.detail.planet);
+            const planetName = event.detail.planet;
+            cameraManager.zoomToPlanet(planetName);
+        });
+        
+        document.addEventListener('solarSystem:followPlanet', (event) => {
+            console.log('👁️ Follow planet event:', event.detail.planet);
+            const planetName = event.detail.planet;
+            cameraManager.setMode('follow', planetName);
+        });
+        
+        document.addEventListener('solarSystem:zoomToPlanet', (event) => {
+            console.log('🔍 Zoom to planet event:', event.detail.planet);
+            const planetName = event.detail.planet;
+            cameraManager.zoomToPlanet(planetName);
+        });
+        
+        document.addEventListener('solarSystem:resetView', () => {
+            console.log('🔄 Reset view event');
+            cameraManager.resetView();
+        });
+        
+        document.addEventListener('solarSystem:cameraModeChanged', (event) => {
+            console.log('📷 Camera mode changed:', event.detail.mode);
+            const mode = event.detail.mode;
+            cameraManager.setMode(mode);
+        });
+        
+        console.log('🖱️ Interactive features initialized successfully!');
+    } catch (error) {
+        console.error('❌ Error initializing interactive features:', error);
+    }
+} 

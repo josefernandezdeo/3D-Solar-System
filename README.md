@@ -111,6 +111,8 @@ A stunning interactive 3D solar system built with modern web technologies. Explo
 - Planet information display (size, distance, orbital period, etc.)
 - Search functionality to quickly navigate to planets
 - Performance optimizations and mobile responsiveness
+- On click of a planet, zoom in on planet and display planet education description and other info
+- Polish visuals (Lighting, backgrounds)
 
 **Key Features**:
 - ✅ Click-to-select planets with info panels
