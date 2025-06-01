@@ -50,7 +50,12 @@ export class CameraManager {
         document.addEventListener('mousedown', (event) => this.onMouseDown(event));
         document.addEventListener('mouseup', () => this.onMouseUp());
         document.addEventListener('mousemove', (event) => this.onMouseMove(event));
-        document.addEventListener('wheel', (event) => this.onWheel(event));
+        
+        // Improved wheel event handling for zoom
+        document.addEventListener('wheel', (event) => {
+            event.preventDefault(); // Prevent page scrolling
+            this.onWheel(event);
+        }, { passive: false });
         
         // Touch controls
         let touches = [];
@@ -90,13 +95,18 @@ export class CameraManager {
     }
 
     onMouseDown(event) {
+        // Only handle left mouse button for camera controls
+        if (event.button !== 0) return;
+        
         this.isMouseDown = true;
         this.mouseDownX = event.clientX;
         this.mouseDownY = event.clientY;
+        console.log('🖱️ Mouse down at:', this.mouseDownX, this.mouseDownY);
     }
 
     onMouseUp() {
         this.isMouseDown = false;
+        console.log('🖱️ Mouse up');
     }
 
     onMouseMove(event) {
@@ -104,6 +114,8 @@ export class CameraManager {
         
         const deltaX = event.clientX - this.mouseDownX;
         const deltaY = event.clientY - this.mouseDownY;
+        
+        console.log('🖱️ Mouse move delta:', deltaX, deltaY);
         
         this.freeTheta -= deltaX * 0.01;
         this.freePhi -= deltaY * 0.01;
@@ -114,22 +126,31 @@ export class CameraManager {
     }
 
     onWheel(event) {
+        console.log('🔍 Zoom event:', event.deltaY, 'Current mode:', this.mode);
         this.zoom(event.deltaY * 0.2);
     }
 
     zoom(delta) {
+        console.log('⚙️ Zoom delta:', delta, 'Mode:', this.mode);
+        
         switch (this.mode) {
             case 'free':
+                const oldRadius = this.freeRadius;
                 this.freeRadius += delta;
                 this.freeRadius = Math.max(30, Math.min(400, this.freeRadius));
+                console.log('🎥 Free mode zoom:', oldRadius, '->', this.freeRadius);
                 break;
             case 'follow':
+                const oldFollowDistance = this.followDistance;
                 this.followDistance += delta * 0.1;
                 this.followDistance = Math.max(5, Math.min(50, this.followDistance));
+                console.log('🎯 Follow mode zoom:', oldFollowDistance, '->', this.followDistance);
                 break;
             case 'overview':
+                const oldOverviewDistance = this.overviewDistance;
                 this.overviewDistance += delta;
                 this.overviewDistance = Math.max(200, Math.min(500, this.overviewDistance));
+                console.log('🌌 Overview mode zoom:', oldOverviewDistance, '->', this.overviewDistance);
                 break;
         }
     }
