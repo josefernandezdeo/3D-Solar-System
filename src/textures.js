@@ -3,18 +3,18 @@ import * as THREE from 'three';
 // Texture loader
 const textureLoader = new THREE.TextureLoader();
 
-// Planet texture URLs (using Solar System Scope textures)
+// Planet texture URLs - Using more reliable sources with CORS support
 export const textureUrls = {
-    sun: 'https://www.solarsystemscope.com/textures/download/2k_sun.jpg',
-    mercury: 'https://www.solarsystemscope.com/textures/download/2k_mercury.jpg',
-    venus: 'https://www.solarsystemscope.com/textures/download/2k_venus_surface.jpg',
-    earth: 'https://www.solarsystemscope.com/textures/download/2k_earth_daymap.jpg',
-    mars: 'https://www.solarsystemscope.com/textures/download/2k_mars.jpg',
-    jupiter: 'https://www.solarsystemscope.com/textures/download/2k_jupiter.jpg',
-    saturn: 'https://www.solarsystemscope.com/textures/download/2k_saturn.jpg',
-    uranus: 'https://www.solarsystemscope.com/textures/download/2k_uranus.jpg',
-    neptune: 'https://www.solarsystemscope.com/textures/download/2k_neptune.jpg',
-    moon: 'https://www.solarsystemscope.com/textures/download/2k_moon.jpg'
+    sun: 'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/sun.jpg',
+    mercury: 'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/mercury.jpg',
+    venus: 'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/venus_surface.jpg',
+    earth: 'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/earth_atmos_2048.jpg',
+    mars: 'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/mars_1k_color.jpg',
+    jupiter: 'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/jupiter_1024.jpg',
+    saturn: 'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/saturn_1024.jpg',
+    uranus: 'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/uranus_1024.jpg',
+    neptune: 'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/neptune_1024.jpg',
+    moon: 'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/textures/planets/moon_1024.jpg'
 };
 
 // Alternative: Local texture paths (user's folder structure)
@@ -164,27 +164,38 @@ export async function loadAllTextures(useLocal = false) {
     const planetNames = Object.keys(textureUrls);
     const textures = {};
 
+    // For GitHub Pages, use shorter timeout and skip local textures entirely
+    const timeout = isLocalhost ? 5000 : 2000; // 2 seconds for GitHub Pages
+    
     // Load textures with automatic fallback
     for (const planetName of planetNames) {
         try {
             let texture = null;
             
-            // Try local first if we're on localhost
+            // Only try local if we're on localhost
             if (shouldTryLocal) {
                 console.log(`🔍 Trying local texture for ${planetName}...`);
                 try {
-                    texture = await loadTexture(planetName, true);
+                    const localPromise = loadTexture(planetName, true);
+                    const timeoutPromise = new Promise((_, reject) => 
+                        setTimeout(() => reject(new Error('Local timeout')), 1000)
+                    );
+                    texture = await Promise.race([localPromise, timeoutPromise]);
                     console.log(`✅ Loaded ${planetName} from LOCAL`);
                 } catch (error) {
                     console.warn(`⚠️ Local texture failed for ${planetName}, trying remote...`);
                 }
             }
             
-            // If local failed or we're on GitHub Pages, try remote
+            // If local failed or we're on GitHub Pages, try remote with timeout
             if (!texture) {
                 console.log(`🌐 Trying remote texture for ${planetName}...`);
                 try {
-                    texture = await loadTexture(planetName, false);
+                    const remotePromise = loadTexture(planetName, false);
+                    const timeoutPromise = new Promise((_, reject) => 
+                        setTimeout(() => reject(new Error('Remote timeout')), timeout)
+                    );
+                    texture = await Promise.race([remotePromise, timeoutPromise]);
                     console.log(`✅ Loaded ${planetName} from REMOTE`);
                 } catch (error) {
                     console.error(`❌ Both local and remote failed for ${planetName}:`, error);
@@ -201,6 +212,11 @@ export async function loadAllTextures(useLocal = false) {
 
     const successCount = Object.values(textures).filter(t => t !== null).length;
     console.log(`🎯 Texture loading complete: ${successCount}/${planetNames.length} successful`);
+    
+    // For GitHub Pages, if no textures loaded, don't wait - just continue
+    if (!isLocalhost && successCount === 0) {
+        console.warn('🚨 GitHub Pages: No textures loaded, continuing with fallback colors immediately');
+    }
     
     return textures;
 }

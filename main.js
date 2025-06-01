@@ -90,6 +90,59 @@ let cameraRadius = 120;
 let cameraTheta = Math.PI / 4;
 let cameraPhi = Math.PI / 6;
 
+// Backup zoom system (in case camera manager fails)
+let isMousePressed = false;
+let lastMouseX = 0;
+let lastMouseY = 0;
+
+// Add backup camera controls immediately
+document.addEventListener('wheel', (event) => {
+    event.preventDefault();
+    console.log('🔍 Backup zoom triggered:', event.deltaY);
+    
+    // Backup zoom system
+    cameraRadius += event.deltaY * 0.2;
+    cameraRadius = Math.max(30, Math.min(400, cameraRadius));
+    
+    // Update camera position if camera manager isn't handling it
+    if (!cameraManager || cameraManager.mode === 'free') {
+        updateCamera();
+    }
+    
+    console.log('📏 New camera radius:', cameraRadius);
+}, { passive: false });
+
+document.addEventListener('mousedown', (event) => {
+    if (event.button === 0) { // Left mouse button
+        isMousePressed = true;
+        lastMouseX = event.clientX;
+        lastMouseY = event.clientY;
+        console.log('🖱️ Backup mouse down');
+    }
+});
+
+document.addEventListener('mouseup', () => {
+    isMousePressed = false;
+    console.log('🖱️ Backup mouse up');
+});
+
+document.addEventListener('mousemove', (event) => {
+    if (isMousePressed && (!cameraManager || cameraManager.mode === 'free')) {
+        const deltaX = event.clientX - lastMouseX;
+        const deltaY = event.clientY - lastMouseY;
+        
+        cameraTheta -= deltaX * 0.01;
+        cameraPhi -= deltaY * 0.01;
+        cameraPhi = Math.max(0.1, Math.min(Math.PI - 0.1, cameraPhi));
+        
+        updateCamera();
+        
+        lastMouseX = event.clientX;
+        lastMouseY = event.clientY;
+        console.log('🖱️ Backup camera update');
+    }
+});
+
 // Update camera position (fallback function for when CameraManager isn't active)
 function updateCamera() {
     camera.position.x = cameraRadius * Math.sin(cameraPhi) * Math.cos(cameraTheta);
@@ -107,10 +160,15 @@ async function createTexturedPlanets() {
     console.log('🌍 Environment:', window.location.hostname);
     
     try {
-        // Add timeout for texture loading to prevent hanging
+        // Add timeout for texture loading to prevent hanging - shorter timeout for GitHub Pages
+        const isLocalhost = window.location.hostname === 'localhost' || 
+                           window.location.hostname === '127.0.0.1' || 
+                           window.location.hostname === '';
+        const timeout = isLocalhost ? 5000 : 3000; // 3 seconds for GitHub Pages
+        
         const textureLoadingPromise = loadAllTextures(true); // true = try local first
         const timeoutPromise = new Promise((_, reject) => 
-            setTimeout(() => reject(new Error('Texture loading timeout')), 15000) // 15 second timeout
+            setTimeout(() => reject(new Error('Texture loading timeout')), timeout)
         );
         
         planetTextures = await Promise.race([textureLoadingPromise, timeoutPromise]);
