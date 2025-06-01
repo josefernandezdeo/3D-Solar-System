@@ -2,7 +2,7 @@ import * as THREE from 'three';
 
 // UI State Management
 export class UIManager {
-    constructor() {
+    constructor(planetTextures = {}) {
         this.timeScale = 1;
         this.isPaused = false;
         this.selectedPlanet = null;
@@ -10,6 +10,7 @@ export class UIManager {
         this.showAsteroidBelt = true;
         this.currentCameraMode = 'free';
         this.searchResults = [];
+        this.planetTextures = planetTextures; // Store the textures for use in info panel
         
         this.initializeUI();
         this.setupEventListeners();
@@ -318,6 +319,31 @@ export class UIManager {
         document.getElementById('planet-day').textContent = planetData.dayLength;
         document.getElementById('planet-temp').textContent = planetData.temperature;
         document.getElementById('planet-desc').textContent = planetData.description;
+        
+        // Display the planet texture image
+        const planetImageDiv = document.getElementById('planet-image');
+        const planetName = planetData.name.toLowerCase();
+        
+        // Clear any existing content
+        planetImageDiv.innerHTML = '';
+        
+        // Check if we have a texture for this planet
+        const texture = this.planetTextures[planetName];
+        
+        if (texture && texture.image) {
+            // Create an image element with the texture
+            const img = document.createElement('img');
+            img.src = texture.image.src;
+            img.alt = `${planetData.name} texture`;
+            img.style.width = '100%';
+            img.style.height = '100%';
+            img.style.objectFit = 'cover';
+            img.style.borderRadius = '10px';
+            planetImageDiv.appendChild(img);
+        } else {
+            // Fallback: show planet emoji if no texture available
+            planetImageDiv.innerHTML = `<div style="font-size: 4rem; display: flex; align-items: center; justify-content: center; height: 100%;">${this.getPlanetEmoji(planetName)}</div>`;
+        }
         
         document.getElementById('planet-info-panel').classList.remove('hidden');
     }

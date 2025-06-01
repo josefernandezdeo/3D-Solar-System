@@ -438,7 +438,7 @@ function initializeInteractiveFeatures() {
     try {
         // Initialize UI Manager
         console.log('📋 Creating UI Manager...');
-        uiManager = new UIManager();
+        uiManager = new UIManager(planetTextures);
         console.log('✅ UI Manager created');
         
         // Initialize Camera Manager
