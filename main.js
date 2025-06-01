@@ -495,6 +495,34 @@ function initializeInteractiveFeatures() {
             cameraManager.setMode(mode);
         });
         
+        // Handle orbit visibility toggle
+        document.addEventListener('solarSystem:orbitsToggled', (event) => {
+            console.log('🔄 Orbits toggled:', event.detail.show);
+            const show = event.detail.show;
+            orbitLines.forEach(orbitLine => {
+                orbitLine.visible = show;
+            });
+        });
+        
+        // Handle asteroid belt visibility toggle  
+        document.addEventListener('solarSystem:asteroidsToggled', (event) => {
+            console.log('🔄 Asteroids toggled:', event.detail.show);
+            const show = event.detail.show;
+            if (asteroidBelt) {
+                asteroidBelt.visible = show;
+            }
+            if (majorAsteroids) {
+                majorAsteroids.forEach(asteroid => {
+                    asteroid.visible = show;
+                });
+            }
+            if (asteroidGuides) {
+                asteroidGuides.forEach(guide => {
+                    guide.visible = show;
+                });
+            }
+        });
+        
         console.log('🖱️ Interactive features initialized successfully!');
     } catch (error) {
         console.error('❌ Error initializing interactive features:', error);

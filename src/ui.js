@@ -26,54 +26,47 @@ export class UIManager {
         controlPanel.id = 'control-panel';
         controlPanel.className = 'consolidated-panel';
         controlPanel.innerHTML = `
-            <!-- Time Controls Section -->
-            <div class="control-section">
-                <h3>⏰ Time Controls</h3>
-                <div class="time-buttons">
-                    <button id="pause-btn" class="control-btn">⏸️ Pause</button>
-                    <button id="play-btn" class="control-btn active">▶️ Play</button>
+            <!-- Panel Toggle Button -->
+            <button id="toggle-panel" class="panel-toggle" title="Hide/Show Controls">⚙️</button>
+            
+            <div id="panel-content">
+                <!-- Planet Search Section -->
+                <div class="control-section compact">
+                    <h3>🔍 Planets</h3>
+                    <div class="search-container">
+                        <input type="text" id="planet-search" placeholder="Search..." autocomplete="off">
+                        <div id="search-results" class="search-results"></div>
+                    </div>
+                    <div class="planet-grid">
+                        <button class="planet-btn compact" data-planet="sun">☀️</button>
+                        <button class="planet-btn compact" data-planet="earth">🌍</button>
+                        <button class="planet-btn compact" data-planet="mars">🔴</button>
+                        <button class="planet-btn compact" data-planet="jupiter">🪐</button>
+                        <button class="planet-btn compact" data-planet="saturn">💍</button>
+                        <button class="planet-btn compact" data-planet="uranus">🔵</button>
+                    </div>
                 </div>
-                <div class="speed-control">
-                    <label for="speed-slider">Speed: <span id="speed-value">1x</span></label>
-                    <input type="range" id="speed-slider" min="0.1" max="10" step="0.1" value="1">
-                </div>
-            </div>
 
-            <!-- Planet Search Section -->
-            <div class="control-section">
-                <h3>🔍 Planet Navigator</h3>
-                <div class="search-container">
-                    <input type="text" id="planet-search" placeholder="Search planets..." autocomplete="off">
-                    <div id="search-results" class="search-results"></div>
-                </div>
-                <div class="quick-nav">
-                    <button class="planet-btn" data-planet="sun">☀️ Sun</button>
-                    <button class="planet-btn" data-planet="earth">🌍 Earth</button>
-                    <button class="planet-btn" data-planet="mars">🔴 Mars</button>
-                    <button class="planet-btn" data-planet="jupiter">🪐 Jupiter</button>
-                    <button class="planet-btn" data-planet="saturn">💍 Saturn</button>
-                </div>
-            </div>
-
-            <!-- View Controls Section -->
-            <div class="control-section">
-                <h3>👁️ View Options</h3>
-                <div class="camera-modes">
-                    <button id="free-camera" class="mode-btn active" data-mode="free">🎥 Free Roam</button>
-                    <button id="follow-camera" class="mode-btn" data-mode="follow">🎯 Follow Planet</button>
-                    <button id="overview-camera" class="mode-btn" data-mode="overview">🌌 Overview</button>
-                </div>
-                <div class="toggle-controls">
-                    <label class="toggle-label">
-                        <input type="checkbox" id="show-orbits" checked>
-                        <span class="toggle-slider"></span>
-                        Show Orbits
-                    </label>
-                    <label class="toggle-label">
-                        <input type="checkbox" id="show-asteroids" checked>
-                        <span class="toggle-slider"></span>
-                        Asteroid Belt
-                    </label>
+                <!-- View Controls Section -->
+                <div class="control-section compact">
+                    <h3>👁️ View</h3>
+                    <div class="camera-modes compact">
+                        <button id="free-camera" class="mode-btn compact active" data-mode="free">🎥</button>
+                        <button id="follow-camera" class="mode-btn compact" data-mode="follow">🎯</button>
+                        <button id="overview-camera" class="mode-btn compact" data-mode="overview">🌌</button>
+                    </div>
+                    <div class="toggle-controls compact">
+                        <label class="toggle-label compact">
+                            <input type="checkbox" id="show-orbits" checked>
+                            <span class="toggle-slider compact"></span>
+                            <span class="toggle-text">Orbits</span>
+                        </label>
+                        <label class="toggle-label compact">
+                            <input type="checkbox" id="show-asteroids" checked>
+                            <span class="toggle-slider compact"></span>
+                            <span class="toggle-text">Asteroids</span>
+                        </label>
+                    </div>
                 </div>
             </div>
         `;
@@ -181,10 +174,8 @@ export class UIManager {
             }
         };
 
-        // Time controls
-        safeAddListener('pause-btn', 'click', () => this.pauseTime());
-        safeAddListener('play-btn', 'click', () => this.playTime());
-        safeAddListener('speed-slider', 'input', (e) => this.setTimeSpeed(parseFloat(e.target.value)));
+        // Panel toggle
+        safeAddListener('toggle-panel', 'click', () => this.togglePanel());
 
         // Planet search
         safeAddListener('planet-search', 'input', (e) => this.searchPlanets(e.target.value));
@@ -197,9 +188,15 @@ export class UIManager {
             btn.addEventListener('click', () => this.setCameraMode(btn.dataset.mode));
         });
 
-        // View toggles
-        safeAddListener('show-orbits', 'change', (e) => this.toggleOrbits(e.target.checked));
-        safeAddListener('show-asteroids', 'change', (e) => this.toggleAsteroids(e.target.checked));
+        // View toggles - Fixed to actually work
+        safeAddListener('show-orbits', 'change', (e) => {
+            console.log('🔄 Toggling orbits:', e.target.checked);
+            this.toggleOrbits(e.target.checked);
+        });
+        safeAddListener('show-asteroids', 'change', (e) => {
+            console.log('🔄 Toggling asteroids:', e.target.checked);
+            this.toggleAsteroids(e.target.checked);
+        });
 
         // Info panel
         safeAddListener('close-info', 'click', () => this.hidePlanetInfo());
@@ -219,6 +216,22 @@ export class UIManager {
         });
         
         console.log('🎯 UI event listeners setup complete');
+    }
+
+    // Panel control methods
+    togglePanel() {
+        const panelContent = document.getElementById('panel-content');
+        const toggleBtn = document.getElementById('toggle-panel');
+        
+        if (panelContent.style.display === 'none') {
+            panelContent.style.display = 'block';
+            toggleBtn.textContent = '⚙️';
+            toggleBtn.title = 'Hide Controls';
+        } else {
+            panelContent.style.display = 'none';
+            toggleBtn.textContent = '👁️';
+            toggleBtn.title = 'Show Controls';
+        }
     }
 
     // Time control methods
@@ -279,20 +292,20 @@ export class UIManager {
 
     // Camera mode methods
     setCameraMode(mode) {
-        this.currentCameraMode = mode;
+        // Update UI
         document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
         document.querySelector(`[data-mode="${mode}"]`).classList.add('active');
+        
+        // Dispatch event
         this.dispatchEvent('cameraModeChanged', { mode });
     }
 
     // View toggle methods
     toggleOrbits(show) {
-        this.showOrbits = show;
         this.dispatchEvent('orbitsToggled', { show });
     }
 
     toggleAsteroids(show) {
-        this.showAsteroidBelt = show;
         this.dispatchEvent('asteroidsToggled', { show });
     }
 
