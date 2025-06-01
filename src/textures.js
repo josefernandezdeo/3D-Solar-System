@@ -4,7 +4,7 @@ import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.m
 const textureLoader = new THREE.TextureLoader();
 textureLoader.crossOrigin = 'anonymous'; // Enable CORS for GitHub Pages
 
-// Local texture paths (user's folder structure) - only used on localhost
+// Local texture paths (user's folder structure) - used for both localhost and GitHub Pages
 export const localTexturePaths = {
     sun: './textures%20solar%20system/2k_sun.jpg',
     mercury: './textures%20solar%20system/2k_mercury.jpg',
@@ -136,7 +136,7 @@ function tryAlternativePaths(planetName, resolve, reject) {
 
 // Load all planet textures with GitHub Pages compatibility
 export async function loadAllTextures(useLocal = false) {
-    console.log('🎨 Starting texture loading...', useLocal ? 'LOCAL mode' : 'REMOTE mode');
+    console.log('🎨 Starting texture loading...');
     
     // For GitHub Pages, detect if we're running on localhost vs deployed
     const isLocalhost = window.location.hostname === 'localhost' || 
@@ -144,50 +144,36 @@ export async function loadAllTextures(useLocal = false) {
                        window.location.hostname === '';
     
     console.log('🌍 Environment:', isLocalhost ? 'LOCALHOST' : 'GITHUB PAGES');
-    
-    // On GitHub Pages, skip texture loading entirely for reliability
-    if (!isLocalhost) {
-        console.log('🚀 GitHub Pages detected - skipping texture loading for better performance');
-        console.log('🎨 Using beautiful fallback colors instead!');
-        const emptyTextures = {};
-        Object.keys(localTexturePaths).forEach(planetName => {
-            emptyTextures[planetName] = null;
-        });
-        return emptyTextures;
-    }
-    
-    console.log('🏠 Localhost detected - attempting to load local textures');
-    const shouldTryLocal = useLocal && isLocalhost;
+    console.log('🎨 Loading textures from textures solar system folder...');
 
     const planetNames = Object.keys(localTexturePaths);
     const textures = {};
     
-    // For localhost, try loading local textures with timeout
-    if (shouldTryLocal) {
-        for (const planetName of planetNames) {
-            try {
-                console.log(`🔍 Trying local texture for ${planetName}...`);
-                const localPromise = loadTexture(planetName, true);
-                const timeoutPromise = new Promise((_, reject) => 
-                    setTimeout(() => reject(new Error('Local timeout')), 2000)
-                );
-                const texture = await Promise.race([localPromise, timeoutPromise]);
-                textures[planetName] = texture;
-                console.log(`✅ Loaded ${planetName} from LOCAL`);
-            } catch (error) {
-                console.warn(`⚠️ Local texture failed for ${planetName}, using fallback color`);
-                textures[planetName] = null;
-            }
-        }
-    } else {
-        // No local loading requested, use fallback colors
-        planetNames.forEach(planetName => {
+    // Load textures for both localhost and GitHub Pages
+    for (const planetName of planetNames) {
+        try {
+            console.log(`🔍 Loading texture for ${planetName}...`);
+            const texturePromise = loadTexture(planetName, true);
+            const timeoutPromise = new Promise((_, reject) => 
+                setTimeout(() => reject(new Error('Texture timeout')), 5000)
+            );
+            const texture = await Promise.race([texturePromise, timeoutPromise]);
+            textures[planetName] = texture;
+            console.log(`✅ Loaded ${planetName} texture successfully`);
+        } catch (error) {
+            console.warn(`⚠️ Texture failed for ${planetName}, using fallback color:`, error.message);
             textures[planetName] = null;
-        });
+        }
     }
 
     const successCount = Object.values(textures).filter(t => t !== null).length;
     console.log(`🎯 Texture loading complete: ${successCount}/${planetNames.length} successful`);
+    
+    if (successCount === 0) {
+        console.log('🎨 No textures loaded - using beautiful fallback colors');
+    } else {
+        console.log(`🎨 Using ${successCount} textures + ${planetNames.length - successCount} fallback colors`);
+    }
     
     return textures;
 }
