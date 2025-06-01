@@ -95,23 +95,7 @@ let isMousePressed = false;
 let lastMouseX = 0;
 let lastMouseY = 0;
 
-// Add backup camera controls immediately
-document.addEventListener('wheel', (event) => {
-    event.preventDefault();
-    console.log('🔍 Backup zoom triggered:', event.deltaY);
-    
-    // Backup zoom system
-    cameraRadius += event.deltaY * 0.2;
-    cameraRadius = Math.max(30, Math.min(400, cameraRadius));
-    
-    // Update camera position if camera manager isn't handling it
-    if (!cameraManager || cameraManager.mode === 'free') {
-        updateCamera();
-    }
-    
-    console.log('📏 New camera radius:', cameraRadius);
-}, { passive: false });
-
+// Add backup camera controls immediately (mouse only, wheel handled by camera manager)
 document.addEventListener('mousedown', (event) => {
     if (event.button === 0) { // Left mouse button
         isMousePressed = true;

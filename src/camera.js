@@ -276,8 +276,13 @@ export class CameraManager {
     }
 
     updateFreeMode() {
+        // Always calculate and apply the free position
+        this.calculateFreePosition();
+        
+        // Apply position immediately if not transitioning
         if (!this.isTransitioning) {
-            this.calculateFreePosition();
+            this.camera.position.copy(this.targetPosition);
+            this.camera.lookAt(this.targetLookAt);
         }
     }
 
